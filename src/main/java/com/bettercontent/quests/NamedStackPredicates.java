@@ -16,10 +16,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 /** Named, version-tolerant stack checks used by authored quest data. */
 public final class NamedStackPredicates {
-    private static final Set<String> BASE_SUPPORTED = Set.of(
-            "food_temperature_changed", "water_purity_3", "armor_with_inserted_insulation",
-            "tempered_waterskin", "any_tcon_sand_cast", "any_tcon_permanent_cast", "tcon_functional_metal_part",
-            "tcon_tool_with_metal_functional_part");
+    private static final Set<String> BASE_SUPPORTED = Set.of("water_purity_3");
     private static final Map<String, ResourceLocation> ENCHANTMENTS = Map.ofEntries(
             enchantment("ars_nouveau", "mana_boost"), enchantment("ars_nouveau", "mana_regen"),
             enchantment("ars_nouveau", "reactive"), enchantment("minecraft", "aqua_affinity"),
