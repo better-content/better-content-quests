@@ -1,6 +1,7 @@
 package com.bettercontent.quests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -25,6 +26,8 @@ final class QuestInfrastructureTest {
         assertTrue(NamedStackPredicates.SUPPORTED.contains("enchantment_ars_nouveau_reactive"));
         assertTrue(NamedStackPredicates.SUPPORTED.contains("enchantment_minecraft_silk_touch"));
         assertEquals(31, NamedStackPredicates.SUPPORTED.size());
+        assertFalse(NamedStackPredicates.SUPPORTED.contains("food_temperature_changed"));
+        assertFalse(NamedStackPredicates.SUPPORTED.contains("tcon_tool_with_metal_functional_part"));
     }
 
     @Test

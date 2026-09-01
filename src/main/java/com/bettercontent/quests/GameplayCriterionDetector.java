@@ -3,10 +3,7 @@ package com.bettercontent.quests;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.EnumSet;
-import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -17,7 +14,6 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
@@ -27,36 +23,12 @@ import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public final class GameplayCriterionDetector {
-    private static final Map<UUID, Set<Long>> PLANTED_CROPS = new HashMap<>();
-    private static final Map<UUID, Set<Long>> TRANSPLANTED_FOOD = new HashMap<>();
-    private static final Map<UUID, Set<String>> EATEN_FOODS = new HashMap<>();
+    private static final java.util.Map<UUID, Set<String>> EATEN_FOODS = new java.util.HashMap<>();
 
     private GameplayCriterionDetector() {}
-
-    @SubscribeEvent
-    public static void onPlace(BlockEvent.EntityPlaceEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        String id = blockId(event.getPlacedBlock());
-        if (event.getPlacedBlock().getBlock() instanceof CropBlock) remember(PLANTED_CROPS, player, event.getPos());
-        if (id.contains("sapling") || id.contains("berry_bush") || id.contains("fruit") || id.contains("orchard")) {
-            remember(TRANSPLANTED_FOOD, player, event.getPos());
-        }
-    }
-
-    @SubscribeEvent
-    public static void onCropBreak(BlockEvent.BreakEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player)) return;
-        if (isRemembered(TRANSPLANTED_FOOD, player, event.getPos())) QuestCriteria.trigger(player, "transplanted_food_harvest");
-        if (!(event.getState().getBlock() instanceof CropBlock crop) || !crop.isMaxAge(event.getState())) return;
-        if (isRemembered(PLANTED_CROPS, player, event.getPos())) QuestCriteria.trigger(player, "planted_harvest");
-        if (event.getPos().getY() < 48 && !player.level().canSeeSky(event.getPos())) QuestCriteria.trigger(player, "offseason_growing");
-        String below = BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(event.getPos().below()).getBlock()).toString();
-        if (below.contains("regolith") && below.contains("farmland")) QuestCriteria.trigger(player, "regolith_crop_harvest");
-    }
 
     @SubscribeEvent
     public static void onBreed(BabyEntitySpawnEvent event) {
@@ -80,7 +52,6 @@ public final class GameplayCriterionDetector {
         if (id.equals("create:hand_crank") && isConnectedManualWorkcell(player, event.getPos())) {
             QuestCriteria.trigger(player, "manual_workcell_run");
         }
-        if (isRemembered(TRANSPLANTED_FOOD, player, event.getPos())) QuestCriteria.trigger(player, "transplanted_food_harvest");
     }
 
     @SubscribeEvent
@@ -90,7 +61,6 @@ public final class GameplayCriterionDetector {
         if (hasShelter(player)) QuestCriteria.trigger(player, "shelter_completed");
         if (hasFreshStoredFood(player)) QuestCriteria.trigger(player, "fresh_food_stored");
         if (hasPackedProvisions(player)) QuestCriteria.trigger(player, "provisions_packed");
-        if (hasVentilationNetwork(player)) QuestCriteria.trigger(player, "ventilation_network");
     }
 
     static boolean hasShelter(ServerPlayer player) {
@@ -133,38 +103,10 @@ public final class GameplayCriterionDetector {
         return food >= 4 && water >= 2;
     }
 
-    static boolean hasVentilationNetwork(ServerPlayer player) {
-        BlockPos center = player.blockPosition();
-        Set<BlockPos> pieces = new HashSet<>();
-        boolean chimney = false, mover = false;
-        for (BlockPos pos : BlockPos.betweenClosed(center.offset(-12, -8, -12), center.offset(12, 8, 12))) {
-            String id = blockId(player.level().getBlockState(pos));
-            if (!(id.contains("chimney") || id.contains("vent") || id.contains("duct") || id.contains("pipe") || id.contains("pump"))) continue;
-            BlockPos immutable = pos.immutable(); pieces.add(immutable);
-            chimney |= id.contains("chimney"); mover |= id.contains("vent") || id.contains("pump");
-        }
-        if (!chimney || !mover || pieces.size() < 3) return false;
-        Set<BlockPos> visited = new HashSet<>(); ArrayDeque<BlockPos> open = new ArrayDeque<>();
-        open.add(pieces.iterator().next());
-        while (!open.isEmpty()) { BlockPos pos = open.remove(); if (!visited.add(pos)) continue;
-            for (Direction direction : Direction.values()) { BlockPos next = pos.relative(direction); if (pieces.contains(next)) open.add(next); }
-        }
-        return visited.size() == pieces.size();
-    }
-
     private static boolean freshTemperature(ItemStack stack) {
         if (stack.getTag() == null || !stack.getTag().contains("heat_sync_food", 10)) return true;
         var food = stack.getTag().getCompound("heat_sync_food");
         return food.getDouble("decay") < 1.0 / 7.0 && food.getDouble("temperature_k") > 273.15;
-    }
-
-    private static void remember(Map<UUID, Set<Long>> map, ServerPlayer player, BlockPos pos) {
-        Set<Long> values = map.computeIfAbsent(player.getUUID(), ignored -> new HashSet<>()); values.add(pos.asLong());
-        if (values.size() > 512) values.remove(values.iterator().next());
-    }
-
-    private static boolean isRemembered(Map<UUID, Set<Long>> map, ServerPlayer player, BlockPos pos) {
-        return map.getOrDefault(player.getUUID(), Set.of()).contains(pos.asLong());
     }
 
     private static String blockId(BlockState state) { return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(); }
