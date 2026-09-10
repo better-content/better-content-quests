@@ -51,12 +51,16 @@ repositories {
     maven("https://repo.spongepowered.org/repository/maven-public/")
     maven("https://maven.llamalad7.mixinextras.org/releases/")
     maven("https://maven.valkyrienskies.org") { content { includeGroup("org.valkyrienskies.core") } }
+    maven("https://maven.createmod.net")
     maven("https://www.cursemaven.com") { content { includeGroup("curse.maven") } }
     mavenCentral()
 }
 
 dependencies {
     minecraft("net.minecraftforge:forge:${property("minecraft_version")}-${property("forge_version")}")
+    compileOnly(files("../class-selector/build/libs/class-selector-1.0.0.jar"))
+    compileOnly(files("../dimension-drink/build/libs/dimension-drink-1.0.0.jar"))
+    compileOnly(fg.deobf("com.simibubi.create:create-${property("minecraft_version")}:6.0.8-291:slim"))
     compileOnly(fg.deobf("curse.maven:hyle-609850:7736352"))
     compileOnly(fg.deobf("curse.maven:thirst-was-taken-679270:6660408"))
     compileOnly(fg.deobf("curse.maven:cold-sweat-506194:7893262"))
