@@ -15,5 +15,6 @@ public final class BetterContentQuests {
 
     private void registerGameTests(RegisterGameTestsEvent event) {
         event.register(QuestPredicateGameTests.class);
+        event.register(QuestCriterionGameTests.class);
     }
 }

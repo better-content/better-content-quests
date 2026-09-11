@@ -144,21 +144,6 @@ tasks.register("verifyFull") {
     dependsOn(tasks.named("headlessGameTest"))
 }
 
-val resetGameTestMods = tasks.register<Delete>("resetGameTestMods") {
-    delete(layout.projectDirectory.dir("run-gametest/mods"))
-    delete(layout.projectDirectory.dir("run-gametest/world"))
-}
-
-val syncGameTestStructures = tasks.register<Sync>("syncGameTestStructures") {
-    from(layout.projectDirectory.dir("src/main/resources/gameteststructures"))
-    into(layout.projectDirectory.dir("run-gametest/gameteststructures"))
-}
-
-tasks.matching { it.name.startsWith("prepareRunGameTestServer") }.configureEach {
-    dependsOn(resetGameTestMods)
-    dependsOn(syncGameTestStructures)
-}
-
 tasks.processResources {
     val props = mapOf(
         "minecraft_version" to project.property("minecraft_version"),
@@ -172,3 +157,5 @@ tasks.processResources {
         expand(props)
     }
 }
+
+apply(from = "gradle/gametest-evidence.gradle")

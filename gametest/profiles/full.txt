@@ -1,0 +1,3 @@
+criterioncompletesonlymatchingtaskandteam
+criterionconfigurationroundtripsthroughnbtandnetwork
+enchantmentpredicatesinspectactualstackenchantments
