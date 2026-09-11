@@ -2,7 +2,7 @@ plugins {
     idea
     `maven-publish`
     jacoco
-    id("net.minecraftforge.gradle") version "[6.0.24,6.2)"
+    id("net.minecraftforge.gradle") version "6.0.54"
     id("org.parchmentmc.librarian.forgegradle") version "1.2.0"
 }
 
@@ -45,6 +45,18 @@ minecraft {
     }
 }
 
+// CI and fresh-release builds provide verified runtime JARs explicitly.
+// Ordinary local builds retain the canonical sibling build/libs convention.
+fun betterContentJar(repository: String, artifact: String): java.io.File {
+    val directory = providers.environmentVariable("BC_CUSTOM_MOD_JAR_DIR").orNull
+    require(directory == null || directory.isNotBlank()) { "BC_CUSTOM_MOD_JAR_DIR must not be blank" }
+    val jar = if (directory == null) file("../$repository/build/libs/$artifact") else file(directory).resolve(artifact)
+    require(jar.isFile) {
+        "Missing Better Content provider $artifact at $jar; prepare BC_CUSTOM_MOD_JAR_DIR or build $repository first"
+    }
+    return jar
+}
+
 repositories {
     maven("https://maven.minecraftforge.net")
     maven("https://harleyoconnor.com/maven")
@@ -58,8 +70,8 @@ repositories {
 
 dependencies {
     minecraft("net.minecraftforge:forge:${property("minecraft_version")}-${property("forge_version")}")
-    compileOnly(files("../class-selector/build/libs/class-selector-1.0.0.jar"))
-    compileOnly(files("../dimension-drink/build/libs/dimension-drink-1.0.0.jar"))
+    compileOnly(files(betterContentJar("class-selector", "class-selector-1.0.0.jar")))
+    compileOnly(files(betterContentJar("dimension-drink", "dimension-drink-1.0.0.jar")))
     compileOnly(fg.deobf("com.simibubi.create:create-${property("minecraft_version")}:6.0.8-291:slim"))
     compileOnly(fg.deobf("curse.maven:hyle-609850:7736352"))
     compileOnly(fg.deobf("curse.maven:thirst-was-taken-679270:6660408"))
